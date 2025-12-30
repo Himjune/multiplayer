@@ -1,6 +1,6 @@
-const miniPlayers = document.querySelectorAll(".mini-player");
+const playerSections = document.querySelectorAll(".player-section");
 let active = null;
-let mode = null;
+let activeMode = null;
 let startX = 0;
 let startY = 0;
 let startWidth = 0;
@@ -28,12 +28,33 @@ const videos = [
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+const setMainPlayer = (section) => {
+  if (!section) return;
+  const currentMain = document.querySelector(".main-player");
+  if (currentMain === section) return;
+
+  currentMain.classList.toggle("main-player", false);
+  currentMain.classList.toggle("mini-player", true);
+  section.classList.toggle("main-player", true);
+  section.classList.toggle("mini-player", false);
+
+  const style = section.getAttribute("style");
+  section.setAttribute("style", "inset: 0;");
+  currentMain.setAttribute("style", style);
+
+  const targetButton = section.querySelector(".make-main");
+  if (targetButton) targetButton.disabled = true;
+
+  const currentButton = currentMain.querySelector(".make-main");
+  if (currentButton) currentButton.disabled = false;
+};
+
 const onPointerMove = (event) => {
   if (!active) return;
   const dx = event.clientX - startX;
   const dy = event.clientY - startY;
 
-  if (mode === "drag") {
+  if (activeMode === "drag") {
     const newLeft = clamp(startLeft + dx, 0, window.innerWidth - active.offsetWidth);
     const newTop = clamp(startTop + dy, 0, window.innerHeight - active.offsetHeight);
     active.style.left = `${newLeft}px`;
@@ -41,7 +62,7 @@ const onPointerMove = (event) => {
     active.style.right = "auto";
   }
 
-  if (mode === "resize") {
+  if (activeMode === "resize") {
     const minWidth = 220;
     const minHeight = 130;
     const maxWidth = window.innerWidth - active.offsetLeft;
@@ -57,42 +78,62 @@ const endInteraction = () => {
   if (!active) return;
   active.releasePointerCapture(active.pointerId || 0);
   active = null;
-  mode = null;
+  activeMode = null;
   document.body.style.cursor = "";
 };
 
-miniPlayers.forEach((mini) => {
-  const cover = mini.querySelector(".ui-cover");
-  const handle = mini.querySelector(".resize-handle");
+function startInteraction(section, mode, event) {
+    if (section.classList.contains("main-player")) return;
 
-  cover.addEventListener("pointerdown", (event) => {
-    active = mini;
-    mode = "drag";
+    active = section;
+    activeMode = mode;
     startX = event.clientX;
     startY = event.clientY;
-    startLeft = mini.offsetLeft;
-    startTop = mini.offsetTop;
     active.pointerId = event.pointerId;
-    document.body.style.cursor = "grabbing";
+
+    if (mode === "drag") {
+      startLeft = section.offsetLeft;
+      startTop = section.offsetTop;
+      document.body.style.cursor = "grabbing";
+    }
+    if (mode === "resize") {
+      document.body.style.cursor = "se-resize";
+      startWidth = section.offsetWidth;
+      startHeight = section.offsetHeight;
+      //section.querySelector("resize-handle").setPointerCapture(event.pointerId);
+    }
+}
+
+playerSections.forEach((section) => {
+  const header = section.querySelector("header");
+  const cover = section.querySelector(".ui-cover");
+  const handle = section.querySelector(".resize-handle");
+  const makeMain = section.querySelector(".make-main");
+
+  header.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+    startInteraction(section, "drag", event);
+  });
+
+  cover.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+    startInteraction(section, "drag", event);
   });
 
   handle.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
-    active = mini;
-    mode = "resize";
-    startX = event.clientX;
-    startY = event.clientY;
-    startWidth = mini.offsetWidth;
-    startHeight = mini.offsetHeight;
-    active.pointerId = event.pointerId;
-    handle.setPointerCapture(event.pointerId);
-    document.body.style.cursor = "se-resize";
+    startInteraction(section, "resize", event);
+  });
+
+  makeMain.addEventListener("click", (event) => {
+    setMainPlayer(section);
   });
 });
 
 window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("pointerup", endInteraction);
 window.addEventListener("pointercancel", endInteraction);
+
 
 setTimeout(() => {
   videos.forEach(element => {
