@@ -1,4 +1,7 @@
 const playerSections = document.querySelectorAll(".player-section");
+const controlButtons = document.querySelectorAll(".control-button");
+const volumeSlider = document.getElementById("volumeSlider");
+const volumeValue = document.getElementById("volumeValue");
 let active = null;
 let activeMode = null;
 let startX = 0;
@@ -7,6 +10,8 @@ let startWidth = 0;
 let startHeight = 0;
 let startLeft = 0;
 let startTop = 0;
+
+const RUTUBE_ORIGIN = "https://rutube.ru";
 
 const videos = [
   {
@@ -27,6 +32,14 @@ const videos = [
 ]
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const sendToAll = (type, data = {}) => {
+  videos.forEach((element) => {
+    const player = document.getElementById(element.id);
+    if (!player || !player.contentWindow) return;
+    player.contentWindow.postMessage(JSON.stringify({ type, data }), RUTUBE_ORIGIN);
+  });
+};
 
 const setMainPlayer = (section) => {
   if (!section) return;
@@ -134,48 +147,31 @@ window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("pointerup", endInteraction);
 window.addEventListener("pointercancel", endInteraction);
 
-
-setTimeout(() => {
-  videos.forEach(element => {
-    const player = document.getElementById(element.id);
-    player.contentWindow.postMessage(JSON.stringify({
-        type: 'player:unMute',
-        data: {} 
-    }),'*')
-  });
-}, 5000);
-
-setTimeout(() => {
-  videos.forEach(element => {
-    const player = document.getElementById(element.id);
-    player.contentWindow.postMessage(JSON.stringify({
-        type: 'player:setVolume',
-        data: {volume: 0.01} 
-    }),'*')
-    player.contentWindow.postMessage(JSON.stringify({
-        type: 'player:play',
-        data: {} 
-    }),'*')
-  });
-}, 5500);
-setTimeout(() => {
-  videos.forEach(element => {
-    const player = document.getElementById(element.id);
-    player.contentWindow.postMessage(JSON.stringify({
-        type: 'player:unMute',
-        data: {} 
-    }),'*')
-  });
-}, 6000);
-
-window.addEventListener('message', (event) => {
-
-  const handlers = {
-    "player:currentTime": (data, info)=>{
-      //console.log(info, data);
+controlButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const action = button.dataset.action;
+    if (action === "play") {
+      sendToAll("player:setVolume", {volume: 0})
+      sendToAll("player:play");
     }
-  }
-  const message = JSON.parse(event.data);
-  const video = videos.find((vid)=>{return vid.videoId === message.data.videoId});
-  if (handlers[message.type]) handlers[message.type](message.data, video);
-})
+    if (action === "pause") sendToAll("player:pause");
+    if (action === "fullscreen") {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  });
+});
+
+if (volumeSlider && volumeValue) {
+  volumeSlider.addEventListener("input", () => {
+    const volume = Number(volumeSlider.value) / 100;
+    volumeValue.textContent = `${volumeSlider.value}%`;
+
+    const player = document.getElementById("tutorVid");
+    if (!player || !player.contentWindow) return;
+    player.contentWindow.postMessage(JSON.stringify({ type: "player:setVolume", data: { volume: volume } }), RUTUBE_ORIGIN);
+  });
+}

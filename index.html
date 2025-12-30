@@ -7,6 +7,18 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div class="global-controls">
+      <div class="controls-group">
+        <button class="control-button" data-action="play" type="button">Проигрывание</button>
+        <button class="control-button" data-action="pause" type="button">Пауза</button>
+        <button class="control-button" data-action="fullscreen" type="button">Весь экран</button>
+      </div>
+      <label class="volume-control">
+        <span>Громкость</span>
+        <input id="volumeSlider" type="range" min="0" max="100" value="60" />
+        <output id="volumeValue">60%</output>
+      </label>
+    </div>
     <div class="stage">
       <section class="player-section main-player" data-video="fd219fc7dda278154d936d46d253c312">
         <header>
@@ -16,8 +28,6 @@
         <iframe
           id="boardVid"
           src="https://rutube.ru/play/embed/fd219fc7dda278154d936d46d253c312/?p=ohg0aNy1MqQF-N1a0NLiKQ"
-          allow="autoplay; fullscreen"
-          allowfullscreen
           title="Главный плеер"
         ></iframe>
         <div class="ui-cover" aria-hidden="true"></div>
@@ -32,8 +42,6 @@
           <iframe
             id="tutorVid"
             src="https://rutube.ru/play/embed/4511cbf57def8a0f85be9e987c295558/?p=C4cJQUeIrZC8EkDIMs9oTg&controls=0"
-            allow="autoplay; fullscreen"
-            allowfullscreen
             title="Преподаватель"
           ></iframe>
           <div class="ui-cover" aria-hidden="true"></div>
@@ -48,8 +56,6 @@
           <iframe
             id="speechVid"
             src="https://rutube.ru/play/embed/eca1525943de3de3c99cd988d3f57079/?p=SjjBjSr4RbYOiryNgf-Vgg&controls=0"
-            allow="autoplay; fullscreen"
-            allowfullscreen
             title="Распознаватель"
           ></iframe>
           <div class="ui-cover" aria-hidden="true"></div>
