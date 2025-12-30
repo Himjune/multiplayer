@@ -2,6 +2,7 @@ const playerSections = document.querySelectorAll(".player-section");
 const controlButtons = document.querySelectorAll(".control-button");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeValue = document.getElementById("volumeValue");
+const globalControls = document.querySelector(".global-controls");
 let active = null;
 let activeMode = null;
 let startX = 0;
@@ -45,6 +46,19 @@ const sendToAll = (type, data = {}) => {
   videos.forEach((element) => {
     sendToPlayer(element.id, type, data);
   });
+};
+
+let controlsTimer = null;
+const scheduleControlsHide = () => {
+  if (!globalControls) return;
+  const headers = document.querySelectorAll(".player-section header");
+  clearTimeout(controlsTimer);
+  globalControls.classList.remove("is-hidden");
+  headers.forEach((header) => header.classList.remove("is-hidden"));
+  controlsTimer = setTimeout(() => {
+    globalControls.classList.add("is-hidden");
+    headers.forEach((header) => header.classList.add("is-hidden"));
+  }, 3000);
 };
 
 const requestCurrentTimes = () => {
@@ -148,20 +162,24 @@ playerSections.forEach((section) => {
   header.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
     startInteraction(section, "drag", event);
+    scheduleControlsHide();
   });
 
   cover.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
     startInteraction(section, "drag", event);
+    scheduleControlsHide();
   });
 
   handle.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
     startInteraction(section, "resize", event);
+    scheduleControlsHide();
   });
 
   makeMain.addEventListener("click", (event) => {
     setMainPlayer(section);
+    scheduleControlsHide();
   });
 });
 
@@ -172,6 +190,7 @@ window.addEventListener("pointercancel", endInteraction);
 controlButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const action = button.dataset.action;
+    scheduleControlsHide();
     if (action === "play") {
       sendToAll("player:play");
     }
@@ -193,8 +212,13 @@ if (volumeSlider && volumeValue) {
     const volume = Number(volumeSlider.value) / 100;
     volumeValue.textContent = `${volumeSlider.value}%`;
     sendToAll("player:setVolume", { volume });
+    scheduleControlsHide();
   });
 }
+
+document.addEventListener("mousemove", scheduleControlsHide);
+document.addEventListener("keydown", scheduleControlsHide);
+scheduleControlsHide();
 
 window.addEventListener("message", (event) => {
   if (event.origin !== RUTUBE_ORIGIN) return;

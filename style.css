@@ -35,6 +35,17 @@ body {
   box-shadow: var(--shadow);
 }
 
+.global-controls.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.global-controls {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
 .controls-group {
   display: inline-flex;
   gap: 8px;
@@ -128,6 +139,13 @@ body {
   text-transform: uppercase;
   cursor: move;
   user-select: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mini-player header.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
 }
 
 .mini-player header span {
@@ -162,6 +180,17 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   z-index: 3;
+}
+
+.main-player header.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.main-player header {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .main-player header .dot {
