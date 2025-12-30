@@ -108,11 +108,24 @@ setTimeout(() => {
   videos.forEach(element => {
     const player = document.getElementById(element.id);
     player.contentWindow.postMessage(JSON.stringify({
+        type: 'player:setVolume',
+        data: {volume: 0.01} 
+    }),'*')
+    player.contentWindow.postMessage(JSON.stringify({
         type: 'player:play',
         data: {} 
     }),'*')
   });
 }, 5500);
+setTimeout(() => {
+  videos.forEach(element => {
+    const player = document.getElementById(element.id);
+    player.contentWindow.postMessage(JSON.stringify({
+        type: 'player:unMute',
+        data: {} 
+    }),'*')
+  });
+}, 6000);
 
 window.addEventListener('message', (event) => {
 
