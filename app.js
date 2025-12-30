@@ -1,4 +1,4 @@
-const minis = document.querySelectorAll(".mini");
+const miniPlayers = document.querySelectorAll(".mini-player");
 let active = null;
 let mode = null;
 let startX = 0;
@@ -61,7 +61,7 @@ const endInteraction = () => {
   document.body.style.cursor = "";
 };
 
-minis.forEach((mini) => {
+miniPlayers.forEach((mini) => {
   const cover = mini.querySelector(".ui-cover");
   const handle = mini.querySelector(".resize-handle");
 
