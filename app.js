@@ -82,6 +82,6 @@ setTimeout(()=>{
   console.log(player);
   let send = player.contentWindow.postMeassage(JSON.stringify({
       type: 'player:unMute' 
-  },'*'))
+  }),'*')
   console.log(player, send);
 }, 1000)
