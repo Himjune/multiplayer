@@ -221,6 +221,13 @@ document.addEventListener("keydown", scheduleControlsHide);
 scheduleControlsHide();
 
 window.addEventListener("message", (event) => {
+  const handlers = {
+    "player:init": function (message) {
+      console.log("init", message);
+      sendToAll("player:pause");
+    },
+  }
+
   if (event.origin !== RUTUBE_ORIGIN) return;
   if (typeof event.data !== "string") return;
   let message;
@@ -228,10 +235,7 @@ window.addEventListener("message", (event) => {
     message = JSON.parse(event.data);
   } catch (error) {
     return;
-  }
-  if (message.type !== "player:currentTime" || !message.data) return;
-  const videoId = message.data.videoId || message.data.id;
-  const timeValue = message.data.time || message.data.currentTime;
-  if (!videoId || typeof timeValue !== "number") return;
-  currentTimes.set(videoId, timeValue);
+  } 
+
+  if (handlers[message.type]) handlers[message.type](message);
 });
