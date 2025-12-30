@@ -84,4 +84,4 @@ setTimeout(()=>{
       type: 'player:unMute' 
   }),'*')
   console.log(player, send);
-}, 1000)
+}, 5000)
