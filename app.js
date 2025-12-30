@@ -8,6 +8,24 @@ let startHeight = 0;
 let startLeft = 0;
 let startTop = 0;
 
+const videos = [
+  {
+    type: "tutor",
+    id: "tutorVid",
+    videoId: "4511cbf57def8a0f85be9e987c295558"
+  },
+  {
+    type: "board",
+    id: "boardVid",
+    videoId: "fd219fc7dda278154d936d46d253c312"
+  },
+  {
+    type: "speech",
+    id: "speechVid",
+    videoId: "eca1525943de3de3c99cd988d3f57079"
+  },
+]
+
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const onPointerMove = (event) => {
@@ -55,7 +73,6 @@ minis.forEach((mini) => {
     startLeft = mini.offsetLeft;
     startTop = mini.offsetTop;
     active.pointerId = event.pointerId;
-    header.setPointerCapture(event.pointerId);
     document.body.style.cursor = "grabbing";
   });
 
@@ -77,11 +94,34 @@ window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("pointerup", endInteraction);
 window.addEventListener("pointercancel", endInteraction);
 
-setTimeout(()=>{
-  const player = document.getElementById("tutorVid");
-  console.log(player);
-  let send = player.contentWindow.postMeassage(JSON.stringify({
-      type: 'player:unMute' 
-  }),'*')
-  console.log(player, send);
-}, 5000)
+setTimeout(() => {
+  videos.forEach(element => {
+    const player = document.getElementById(element.id);
+    player.contentWindow.postMessage(JSON.stringify({
+        type: 'player:unMute',
+        data: {} 
+    }),'*')
+  });
+}, 5000);
+
+setTimeout(() => {
+  videos.forEach(element => {
+    const player = document.getElementById(element.id);
+    player.contentWindow.postMessage(JSON.stringify({
+        type: 'player:play',
+        data: {} 
+    }),'*')
+  });
+}, 5500);
+
+window.addEventListener('message', (event) => {
+
+  const handlers = {
+    "player:currentTime": (data, info)=>{
+      //console.log(info, data);
+    }
+  }
+  const message = JSON.parse(event.data);
+  const video = videos.find((vid)=>{return vid.videoId === message.data.videoId});
+  if (handlers[message.type]) handlers[message.type](message.data, video);
+})
