@@ -79,6 +79,7 @@ window.addEventListener("pointercancel", endInteraction);
 
 setTimeout(()=>{
   const player = document.getElementById("tutorVid");
+  console.log(player);
   let send = player.contentWindow.postMeassage(JSON.stringify({
       type: 'player:unMute' 
   },'*'))
