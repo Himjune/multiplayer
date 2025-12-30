@@ -29,16 +29,38 @@ const videos = [
     id: "speechVid",
     videoId: "eca1525943de3de3c99cd988d3f57079"
   },
-]
+];
+
+const currentTimes = new Map();
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+const sendToPlayer = (id, type, data = {}) => {
+  const player = document.getElementById(id);
+  if (!player || !player.contentWindow) return;
+  player.contentWindow.postMessage(JSON.stringify({ type, data }), RUTUBE_ORIGIN);
+};
+
 const sendToAll = (type, data = {}) => {
   videos.forEach((element) => {
-    const player = document.getElementById(element.id);
-    if (!player || !player.contentWindow) return;
-    player.contentWindow.postMessage(JSON.stringify({ type, data }), RUTUBE_ORIGIN);
+    sendToPlayer(element.id, type, data);
   });
+};
+
+const requestCurrentTimes = () => {
+  sendToAll("player:currentTime");
+};
+
+const seekAllBy = (deltaSeconds) => {
+  requestCurrentTimes();
+  setTimeout(() => {
+    videos.forEach((video) => {
+      const currentTime = currentTimes.get(video.videoId);
+      if (typeof currentTime !== "number") return;
+      const targetTime = Math.max(0, currentTime + deltaSeconds);
+      sendToPlayer(video.id, "player:relativelySeek", { time: deltaSeconds });
+    });
+  }, 150);
 };
 
 const setMainPlayer = (section) => {
@@ -151,10 +173,11 @@ controlButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const action = button.dataset.action;
     if (action === "play") {
-      sendToAll("player:setVolume", {volume: 0})
       sendToAll("player:play");
     }
     if (action === "pause") sendToAll("player:pause");
+    if (action === "seek-back") seekAllBy(-10);
+    if (action === "seek-forward") seekAllBy(10);
     if (action === "fullscreen") {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
@@ -169,9 +192,22 @@ if (volumeSlider && volumeValue) {
   volumeSlider.addEventListener("input", () => {
     const volume = Number(volumeSlider.value) / 100;
     volumeValue.textContent = `${volumeSlider.value}%`;
-
-    const player = document.getElementById("tutorVid");
-    if (!player || !player.contentWindow) return;
-    player.contentWindow.postMessage(JSON.stringify({ type: "player:setVolume", data: { volume: volume } }), RUTUBE_ORIGIN);
+    sendToAll("player:setVolume", { volume });
   });
 }
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== RUTUBE_ORIGIN) return;
+  if (typeof event.data !== "string") return;
+  let message;
+  try {
+    message = JSON.parse(event.data);
+  } catch (error) {
+    return;
+  }
+  if (message.type !== "player:currentTime" || !message.data) return;
+  const videoId = message.data.videoId || message.data.id;
+  const timeValue = message.data.time || message.data.currentTime;
+  if (!videoId || typeof timeValue !== "number") return;
+  currentTimes.set(videoId, timeValue);
+});
