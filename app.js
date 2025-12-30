@@ -44,10 +44,10 @@ const endInteraction = () => {
 };
 
 minis.forEach((mini) => {
-  const header = mini.querySelector("header");
+  const cover = mini.querySelector(".ui-cover");
   const handle = mini.querySelector(".resize-handle");
 
-  header.addEventListener("pointerdown", (event) => {
+  cover.addEventListener("pointerdown", (event) => {
     active = mini;
     mode = "drag";
     startX = event.clientX;
@@ -76,3 +76,11 @@ minis.forEach((mini) => {
 window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("pointerup", endInteraction);
 window.addEventListener("pointercancel", endInteraction);
+
+setTimeout(()=>{
+  const player = document.getElementById("tutorVid");
+  let send = player.contentWindow.postMeassage(JSON.stringify({
+      type: 'player:unMute' 
+  },'*'))
+  console.log(player, send);
+}, 1000)
