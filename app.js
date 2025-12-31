@@ -327,7 +327,7 @@ window.addEventListener("message", (event) => {
     "player:init": function (message) {
       console.log("init", message);
       setInterval(()=> {
-      sendToAll("player:setVolume", {volume: 0});
+      sendToAll("player:setVolume", {volume: 0.01});
       //sendToAll("player:pause");
 
       },500)
