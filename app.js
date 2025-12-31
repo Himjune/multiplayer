@@ -327,8 +327,9 @@ window.addEventListener("message", (event) => {
     "player:init": function (message) {
       console.log("init", message);
       setInterval(()=> {
-      sendToAll("player:setVolume", {volume: 0.01});
-      //sendToAll("player:pause");
+        console.log("eve")
+        sendToAll("player:setVolume", {volume: 0.01});
+        //sendToAll("player:pause");
 
       },500)
     },
