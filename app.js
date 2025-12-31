@@ -7,6 +7,7 @@ const audioPlayer = document.getElementById("audioPlayer");
 const audioProgress = document.getElementById("audioProgress");
 const audioTime = document.getElementById("audioTime");
 const audioPanel = document.querySelector(".audio-panel");
+const SYNC_INTERVAL_MS = 250;
 let active = null;
 let activeMode = null;
 let startX = 0;
@@ -37,6 +38,7 @@ const videos = [
 ];
 
 const currentTimes = new Map();
+let lastSyncTimeMs = 0;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -72,6 +74,31 @@ const seekAudioBy = (deltaSeconds) => {
   updateAudioProgress();
 };
 
+const syncVideosToAudio = (force = false) => {
+  if (!audioPlayer) return;
+  const now = performance.now();
+  if (!force && now - lastSyncTimeMs < SYNC_INTERVAL_MS) return;
+  const time = audioPlayer.currentTime || 0;
+  videos.forEach((video) => {
+    const currentTime = currentTimes.get(video.videoId);
+    const diff =  time-currentTime;
+    const forward = diff >= 0
+    if (Math.abs(diff) > 5) {
+      sendToPlayer(video.id, "player:relativelySeek", { time: diff });
+    } else if (Math.abs(diff) > 3) {
+      sendToPlayer(video.id, "player:setPlaybackSpeed", { time: forward ? 1.75 : 0.25 });
+    } else if (Math.abs(diff) > 1) {
+      sendToPlayer(video.id, "player:setPlaybackSpeed", { time: forward ? 1.5 : 0.5 });
+    } else if (Math.abs(diff) > 0.05) {
+      sendToPlayer(video.id, "player:setPlaybackSpeed", { time: forward ? 1.25 : 0.75 });
+    } else {
+      sendToPlayer(video.id, "player:setPlaybackSpeed", { time: 1 });
+    }
+
+  });
+  lastSyncTimeMs = now;
+};
+
 const sendToPlayer = (id, type, data = {}) => {
   const player = document.getElementById(id);
   if (!player || !player.contentWindow) return;
@@ -105,6 +132,7 @@ const requestCurrentTimes = () => {
 
 const seekAllBy = (deltaSeconds) => {
   seekAudioBy(deltaSeconds);
+  syncVideosToAudio(true);
   requestCurrentTimes();
   setTimeout(() => {
     videos.forEach((video) => {
@@ -267,6 +295,7 @@ if (audioProgress && audioPlayer) {
     if (!Number.isNaN(target)) {
       audioPlayer.currentTime = target;
       updateAudioProgress();
+      syncVideosToAudio(true);
     }
     scheduleControlsHide();
   });
@@ -274,7 +303,14 @@ if (audioProgress && audioPlayer) {
 
 if (audioPlayer) {
   audioPlayer.addEventListener("loadedmetadata", updateAudioProgress);
-  audioPlayer.addEventListener("timeupdate", updateAudioProgress);
+  audioPlayer.addEventListener("timeupdate", () => {
+    updateAudioProgress();
+    syncVideosToAudio();
+  });
+  audioPlayer.addEventListener("seeked", () => {
+    updateAudioProgress();
+    syncVideosToAudio(true);
+  });
   audioPlayer.addEventListener("ended", () => {
     audioPlayer.pause();
     updateAudioProgress();
@@ -295,6 +331,13 @@ window.addEventListener("message", (event) => {
       sendToAll("player:pause");
 
       },500)
+    },
+    "player:currentTime": function (message) {
+      if (!message?.data) return;
+      const { currentTime, videoId } = message.data;
+      if (typeof currentTime === "number" && videoId) {
+        currentTimes.set(videoId, currentTime);
+      }
     },
   }
 
