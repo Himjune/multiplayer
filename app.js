@@ -3,6 +3,10 @@ const controlButtons = document.querySelectorAll(".control-button");
 const volumeSlider = document.getElementById("volumeSlider");
 const volumeValue = document.getElementById("volumeValue");
 const globalControls = document.querySelector(".global-controls");
+const audioPlayer = document.getElementById("audioPlayer");
+const audioProgress = document.getElementById("audioProgress");
+const audioTime = document.getElementById("audioTime");
+const audioPanel = document.querySelector(".audio-panel");
 let active = null;
 let activeMode = null;
 let startX = 0;
@@ -36,6 +40,38 @@ const currentTimes = new Map();
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+const formatTime = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+};
+
+const updateAudioProgress = () => {
+  if (!audioPlayer || !audioProgress) return;
+  const duration = audioPlayer.duration;
+  const hasDuration = Number.isFinite(duration) && duration > 0;
+  if (hasDuration) {
+    audioProgress.max = duration;
+  }
+  audioProgress.value = audioPlayer.currentTime || 0;
+  if (audioTime) {
+    const durationText = hasDuration ? formatTime(duration) : "--:--";
+    audioTime.textContent = `${formatTime(audioPlayer.currentTime || 0)} / ${durationText}`;
+  }
+};
+
+const seekAudioBy = (deltaSeconds) => {
+  if (!audioPlayer) return;
+  const duration = audioPlayer.duration;
+  const hasDuration = Number.isFinite(duration) && duration > 0;
+  const target = hasDuration
+    ? clamp((audioPlayer.currentTime || 0) + deltaSeconds, 0, duration)
+    : Math.max(0, (audioPlayer.currentTime || 0) + deltaSeconds);
+  audioPlayer.currentTime = target;
+  updateAudioProgress();
+};
+
 const sendToPlayer = (id, type, data = {}) => {
   const player = document.getElementById(id);
   if (!player || !player.contentWindow) return;
@@ -50,13 +86,15 @@ const sendToAll = (type, data = {}) => {
 
 let controlsTimer = null;
 const scheduleControlsHide = () => {
-  if (!globalControls) return;
+  if (!globalControls && !audioPanel) return;
   const headers = document.querySelectorAll(".player-section header");
   clearTimeout(controlsTimer);
-  globalControls.classList.remove("is-hidden");
+  if (globalControls) globalControls.classList.remove("is-hidden");
+  if (audioPanel) audioPanel.classList.remove("is-hidden");
   headers.forEach((header) => header.classList.remove("is-hidden"));
   controlsTimer = setTimeout(() => {
-    globalControls.classList.add("is-hidden");
+    if (globalControls) globalControls.classList.add("is-hidden");
+    if (audioPanel) audioPanel.classList.add("is-hidden");
     headers.forEach((header) => header.classList.add("is-hidden"));
   }, 3000);
 };
@@ -66,6 +104,7 @@ const requestCurrentTimes = () => {
 };
 
 const seekAllBy = (deltaSeconds) => {
+  seekAudioBy(deltaSeconds);
   requestCurrentTimes();
   setTimeout(() => {
     videos.forEach((video) => {
@@ -193,8 +232,12 @@ controlButtons.forEach((button) => {
     scheduleControlsHide();
     if (action === "play") {
       sendToAll("player:play");
+      if (audioPlayer) audioPlayer.play();
     }
-    if (action === "pause") sendToAll("player:pause");
+    if (action === "pause") {
+      sendToAll("player:pause");
+      if (audioPlayer) audioPlayer.pause();
+    }
     if (action === "seek-back") seekAllBy(-10);
     if (action === "seek-forward") seekAllBy(10);
     if (action === "fullscreen") {
@@ -208,12 +251,35 @@ controlButtons.forEach((button) => {
 });
 
 if (volumeSlider && volumeValue) {
+  if (audioPlayer) audioPlayer.volume = Number(volumeSlider.value) / 100;
   volumeSlider.addEventListener("input", () => {
     const volume = Number(volumeSlider.value) / 100;
     volumeValue.textContent = `${volumeSlider.value}%`;
-    sendToAll("player:setVolume", { volume });
+    //sendToAll("player:setVolume", { volume });
+    if (audioPlayer) audioPlayer.volume = volume;
     scheduleControlsHide();
   });
+}
+
+if (audioProgress && audioPlayer) {
+  audioProgress.addEventListener("input", () => {
+    const target = Number(audioProgress.value);
+    if (!Number.isNaN(target)) {
+      audioPlayer.currentTime = target;
+      updateAudioProgress();
+    }
+    scheduleControlsHide();
+  });
+}
+
+if (audioPlayer) {
+  audioPlayer.addEventListener("loadedmetadata", updateAudioProgress);
+  audioPlayer.addEventListener("timeupdate", updateAudioProgress);
+  audioPlayer.addEventListener("ended", () => {
+    audioPlayer.pause();
+    updateAudioProgress();
+  });
+  updateAudioProgress();
 }
 
 document.addEventListener("mousemove", scheduleControlsHide);
@@ -224,7 +290,11 @@ window.addEventListener("message", (event) => {
   const handlers = {
     "player:init": function (message) {
       console.log("init", message);
+      setTimeout(()=> {
+      sendToAll("player:setVolume", {volume: 0});
       sendToAll("player:pause");
+
+      },500)
     },
   }
 

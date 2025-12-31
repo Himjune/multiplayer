@@ -21,6 +21,22 @@
         <output id="volumeValue">60%</output>
       </label>
     </div>
+    <div class="audio-panel">
+      <div class="audio-meta">
+        <span class="audio-label">Audio Track</span>
+        <span class="audio-time" id="audioTime">00:00 / 00:00</span>
+      </div>
+      <input
+        id="audioProgress"
+        class="audio-progress"
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        step="0.1"
+      />
+    </div>
+    <audio id="audioPlayer" src="audio.mp3" preload="metadata"></audio>
     <div class="stage">
       <section class="player-section main-player" data-video="fd219fc7dda278154d936d46d253c312">
         <header>
