@@ -94,9 +94,9 @@ const syncVideosToAudio = (force = false) => {
     let speed = 1.0 
     if (Math.abs(diff) > 25) {
       speed = 1.0;
-      //sendToPlayer(video.id, "player:relativelySeek", { time: diff });
+      sendToPlayer(video.id, "player:relativelySeek", { time: diff });
     } else if (Math.abs(diff) > 5) {
-      speed = forward ? 1.75 : 0.25;
+      speed = forward ? 2.0 : 0.25;
     } else if (Math.abs(diff) > 2) {
       speed = forward ? 1.5 : 0.75
     } else if (Math.abs(diff) > 0.01) {
