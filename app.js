@@ -37,6 +37,14 @@ const videos = [
   },
 ];
 
+const getVideoObj = (videoId) => {
+  return videos.find((videoObj)=> {return videoObj.videoId === videoId})
+}
+
+const getVideoPlayer = (videoId) => {
+  return document.getElementById(getVideoObj(videoId).id);
+}
+
 const currentTimes = new Map();
 let lastSyncTimeMs = 0;
 
@@ -77,12 +85,13 @@ const seekAudioBy = (deltaSeconds) => {
 const syncVideosToAudio = (force = false) => {
   if (!audioPlayer) return;
   const now = performance.now();
-  if (!force && now - lastSyncTimeMs < SYNC_INTERVAL_MS) return;
+  //if (!force && now - lastSyncTimeMs < SYNC_INTERVAL_MS) return;
   const time = audioPlayer.currentTime || 0;
   videos.forEach((video) => {
     const currentTime = currentTimes.get(video.videoId);
     const diff =  time-currentTime;
-    const forward = diff >= 0
+    const forward = (diff >= 0)
+    console.log(video, currentTime, diff, forward)
     if (Math.abs(diff) > 5) {
       sendToPlayer(video.id, "player:relativelySeek", { time: diff });
     } else if (Math.abs(diff) > 3) {
@@ -104,6 +113,12 @@ const sendToPlayer = (id, type, data = {}) => {
   if (!player || !player.contentWindow) return;
   player.contentWindow.postMessage(JSON.stringify({ type, data }), RUTUBE_ORIGIN);
 };
+
+const sendToVideo = (videoId, type, date = {}) => {
+  const player = getVideoPlayer(videoId);
+  if (!player || !player.contentWindow) return;
+  player.contentWindow.postMessage(JSON.stringify({ type, data }), RUTUBE_ORIGIN);
+}
 
 const sendToAll = (type, data = {}) => {
   videos.forEach((element) => {
@@ -327,7 +342,6 @@ window.addEventListener("message", (event) => {
     "player:init": function (message) {
       console.log("init", message);
       setInterval(()=> {
-        console.log("eve2")
         sendToAll("player:setVolume", {volume: 0.01});
         sendToAll("player:mute", {volume: 0.01});
         //sendToAll("player:pause");
