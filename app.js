@@ -114,7 +114,7 @@ const sendToPlayer = (id, type, data = {}) => {
   player.contentWindow.postMessage(JSON.stringify({ type, data }), RUTUBE_ORIGIN);
 };
 
-const sendToVideo = (videoId, type, date = {}) => {
+const sendToVideo = (videoId, type, data = {}) => {
   const player = getVideoPlayer(videoId);
   if (!player || !player.contentWindow) return;
   player.contentWindow.postMessage(JSON.stringify({ type, data }), RUTUBE_ORIGIN);
@@ -340,13 +340,10 @@ scheduleControlsHide();
 window.addEventListener("message", (event) => {
   const handlers = {
     "player:init": function (message) {
-      console.log("init", message);
-      setInterval(()=> {
-        sendToAll("player:setVolume", {volume: 0.01});
-        sendToAll("player:mute", {volume: 0.01});
-        //sendToAll("player:pause");
-
-      },500)
+      //console.log("init", message, message.data, message.data.videoId);
+      sendToVideo(message?.data?.videoId,"player:setVolume", {volume: 0.01});
+      //sendToAll("player:mute", {volume: 0.01});
+      //sendToAll("player:pause");
     },
     "player:currentTime": function (message) {
       if (!message?.data) return;
