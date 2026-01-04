@@ -104,8 +104,8 @@ const syncVideosToAudio = (force = false) => {
     } else {
       speed = 1.0;
     }
+    if (speed != 1.0) console.log(video, currentTime, diff, forward, speed);
     sendToPlayer(video.id, "player:setPlaybackSpeed", { speed: speed });
-    //console.log(video, currentTime, diff, forward, speed);
   });
   lastSyncTimeMs = now;
 };
