@@ -92,8 +92,8 @@ const syncVideosToAudio = (force = false) => {
     const diff =  time-currentTime;
     const forward = (diff >= 0)
     let speed = 1.0 
-    if (Math.abs(diff) > 10) {
-      speed = 1.0;
+    if (Math.abs(diff) > 5) {
+      speed = 1.5;
       sendToPlayer(video.id, "player:relativelySeek", { time: diff });
     } else if (Math.abs(diff) > 3) {
       speed = forward ? 2.0 : 0.25;
@@ -104,8 +104,8 @@ const syncVideosToAudio = (force = false) => {
     } else {
       speed = 1.0;
     }
-      sendToPlayer(video.id, "player:setPlaybackSpeed", { speed: speed });
-    console.log(video, currentTime, diff, forward, speed);
+    sendToPlayer(video.id, "player:setPlaybackSpeed", { speed: speed });
+    //console.log(video, currentTime, diff, forward, speed);
   });
   lastSyncTimeMs = now;
 };
